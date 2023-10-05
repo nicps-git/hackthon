@@ -1,5 +1,79 @@
-docker network create -d bridge atividadeDockerIII-rede
+Vagrant.configure("2") do |config|
+  
+    # Configurações globais
+    config.vm.box_check_update = true 
+  
+    # Configuração da VM Ubuntu Server
+    config.vm.define "ubuntu" do |ubuntu|
+      ubuntu.vm.box = "ubuntu/trusty64"
+      ubuntu.vm.hostname = "irannicholas-cliente"
+      ubuntu.vm.box_download_insecure=true #Permitir conexão insegura
+  
+      # Interface de rede
+      ubuntu.vm.network "private_network", type: "static", ip: "192.168.56.11"
+      #ubuntu.vm.network "private_network", type: "dhcp"
+      #ubuntu.vm.network "public_network", type: "dhcp"
+  
+      # Configurações do diretório Compartilhado:
+      #config.vm.synced_folder "./shared_windows", "/shared_linux" # do host(shared_windows) para o virtual(shared_linux)
+      #config.vm.synced_folder "/home/nicps/Documents/DevOps/vagrant/GO/docker-gs-ping", "/shared_linux"
 
-docker run -d --name wordpress-1.0 --network atividadeDockerIII-rede -e WORDPRESS_DB_HOST=mysql-container -e WORDPRESS_DB_USER=wordpress -e WORDPRESS_DB_PASSWORD=senhaDBwordpress -p 9090:80 -v wordpress-data:/var/www/html wordpress
+      # Configurações do Provider
+      ubuntu.vm.provider "virtualbox" do |vb|
+          vb.memory = 1024
+          vb.cpus = 1
+      end
+  
+      # Provisionamento para atualizar e instalar
+      ubuntu.vm.provision "shell", inline: <<-SHELL
+         sudo apt-get update -y
+         sudo apt-get install -y git
+         sudo apt-get install -y htop
+         sudo apt-get install -y nano
+         sudo apt-get install -y vim
+         sudo apt-get install -y curl
+      SHELL
+    end
+  
+    # SERVIDOR
+    # Configuração da VM CentOS
+    config.vm.define "centos" do |centos|
+      centos.vm.box = "centos/7"
+      centos.vm.hostname = "irannicholas-servidor"
+      centos.vm.box_download_insecure=true #Permitir conexão insegura
+  
+      # Interface de rede
+      centos.vm.network "private_network", type: "static", ip: "192.168.56.12"
+      #centos.vm.network "private_network", type: "dhcp"
+      #centos.vm.network "public_network", type: "dhcp"
+  
+      # Configurações do Provider
+      centos.vm.provider "virtualbox" do |vb|
+        vb.memory = 2048
+        vb.cpus = 2
+      end
+  
+      # Provisionamento para atualizar e instalar Docker e Docker Compose
+      centos.vm.provision "shell", inline: <<-SHELL
+        sudo yum -y update
+        sudo yum install -y htop
+        sudo yum install -y nano
+        sudo yum install -y curl
+        sudo yum install -y wget
+        sudo yum install -y git
+        sudo yum install -y yum-utils
+        sudo yum install -y docker
+        sudo systemctl start docker
+        sudo systemctl enable docker  
+        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
+        sudo chmod +x /usr/bin/docker-compose
 
-docker run -d --name mysql-container --network atividadeDockerIII-rede -e MYSQL_ROOT_PASSWORD=senhaDBwordpress -e MYSQL_DATABASE=wordpress -e MYSQL_USER=wordpress -e MYSQL_PASSWORD=senhaDBwordpress -v mysql-data:/var/lib/mysql mysql:latest
+
+      SHELL
+    end
+      #docker.vm.provision "shell", path: "install_packages.sh"
+  
+    # Configuração de encaminhamento de porta para a máquina hospedeira:
+    #config.vm.network "forwarded_port", guest: 80, host: 8080
+  
+  end
