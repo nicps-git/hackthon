@@ -1,0 +1,5 @@
+docker network create -d bridge atividadeDockerIII-rede
+
+docker run -d --name wordpress-1.0 --network atividadeDockerIII-rede -e WORDPRESS_DB_HOST=mysql-container -e WORDPRESS_DB_USER=wordpress -e WORDPRESS_DB_PASSWORD=senhaDBwordpress -p 9090:80 -v wordpress-data:/var/www/html wordpress
+
+docker run -d --name mysql-container --network atividadeDockerIII-rede -e MYSQL_ROOT_PASSWORD=senhaDBwordpress -e MYSQL_DATABASE=wordpress -e MYSQL_USER=wordpress -e MYSQL_PASSWORD=senhaDBwordpress -v mysql-data:/var/lib/mysql mysql:latest
